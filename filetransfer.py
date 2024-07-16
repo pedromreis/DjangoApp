@@ -1,5 +1,3 @@
-filetransfer Python
-
 import tkinter as tk
 from tkinter import messagebox
 import paramiko
@@ -25,7 +23,7 @@ class FileTransferApp:
         self.servers = ["Server 1", "Server 2", "Server 3", "Server 4", "Server 5", 
                         "Server 6", "Server 7", "Server 8", "Server 9", "Server 10", "Server 11"]
 
-        self.source_server_menu = tk.OptionMenu(self.master, self.source_server_var, *self.servers, command=self.update_source_dir_list)
+        self.source_server_menu = tk.OptionMenu(self.master, self.source_server_var, *self.servers, command=self.update_source_file_list)
         self.source_server_menu.pack(pady=5)
 
         self.destination_server_label = tk.Label(self.master, text="Select the destination server:")
@@ -37,16 +35,7 @@ class FileTransferApp:
         self.destination_server_menu = tk.OptionMenu(self.master, self.destination_server_var, *self.servers, command=self.update_dest_dir_list)
         self.destination_server_menu.pack(pady=5)
 
-        self.source_dir_label = tk.Label(self.master, text="Select the source directory:")
-        self.source_dir_label.pack(pady=5)
-
-        self.source_dir_var = tk.StringVar(self.master)
-        self.source_dir_var.set("/app/mf/cer/data")
-
-        self.source_dir_menu = tk.OptionMenu(self.master, self.source_dir_var, "")
-        self.source_dir_menu.pack(pady=5)
-
-        self.source_file_label = tk.Label(self.master, text="Select the source file:")
+        self.source_file_label = tk.Label(self.master, text="Select the source file or folder:")
         self.source_file_label.pack(pady=5)
 
         self.source_file_var = tk.StringVar(self.master)
@@ -77,16 +66,16 @@ class FileTransferApp:
             os.makedirs(self.transfer_dir)
 
         # Inicializa a navegação na pasta inicial
-        self.update_source_dir_list(self.source_server_var.get())
+        self.update_source_file_list(self.source_server_var.get())
         self.update_dest_dir_list(self.destination_server_var.get())
 
-    def update_source_dir_list(self, server_name):
-        self.update_dir_list(server_name, self.source_dir_menu, self.source_dir_var, "/app/mf/cer/data", self.update_source_file_list)
+    def update_source_file_list(self, server_name):
+        self.update_file_list(server_name, self.source_file_menu, self.source_file_var, "/app/mf/cer/data", False)
 
     def update_dest_dir_list(self, server_name):
-        self.update_dir_list(server_name, self.dest_path_menu, self.dest_path_var, "/app/mf/cer/data")
+        self.update_file_list(server_name, self.dest_path_menu, self.dest_path_var, "/app/mf/cer/data", True)
 
-    def update_dir_list(self, server_name, menu_widget, var_widget, directory, update_files_callback=None):
+    def update_file_list(self, server_name, menu_widget, var_widget, directory, is_directory):
         try:
             server_info = self.get_server_info(server_name)
             files, directories = self.list_files_and_dirs_on_server(server_info, directory)
@@ -96,40 +85,24 @@ class FileTransferApp:
             # Adiciona a opção de voltar para a pasta anterior
             parent_dir = os.path.dirname(directory.rstrip('/'))
             if parent_dir:
-                menu.add_command(label=".. (Up)", command=lambda: self.update_dir_list(server_name, menu_widget, var_widget, parent_dir, update_files_callback))
+                menu.add_command(label=".. (Up)", command=lambda: self.update_file_list(server_name, menu_widget, var_widget, parent_dir, is_directory))
 
             if directories:
                 for dir in directories:
-                    menu.add_command(label=f"[D] {dir}", command=lambda value=dir: self.update_dir_list(server_name, menu_widget, var_widget, os.path.join(directory, value), update_files_callback))
-
-            if update_files_callback:
-                update_files_callback(server_name, directory)
-
-            var_widget.set(directory)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to update directory list: {str(e)}")
-
-    def update_source_file_list(self, server_name, directory):
-        try:
-            server_info = self.get_server_info(server_name)
-            files, _ = self.list_files_and_dirs_on_server(server_info, directory)
-            menu = self.source_file_menu["menu"]
-            menu.delete(0, "end")
+                    menu.add_command(label=f"[D] {dir}", command=lambda value=dir: self.update_file_list(server_name, menu_widget, var_widget, os.path.join(directory, value), is_directory))
 
             if files:
                 for file in files:
-                    menu.add_command(label=file, command=lambda value=file: self.source_file_var.set(value))
-                self.source_file_var.set(files[0])
-            else:
-                self.source_file_var.set("")
-                menu.add_command(label="No files found", command=lambda: None)
+                    menu.add_command(label=file, command=lambda value=os.path.join(directory, value): var_widget.set(value))
+            
+            var_widget.set(directory if is_directory else "")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update file list: {str(e)}")
 
     def transfer_file(self):
         source_server = self.source_server_var.get()
         destination_server = self.destination_server_var.get()
-        source_file_path = os.path.join(self.source_dir_var.get(), self.source_file_var.get())
+        source_file_path = self.source_file_var.get()
         dest_path = self.dest_path_var.get()
 
         try:
@@ -172,7 +145,7 @@ class FileTransferApp:
             messagebox.showerror("Find Error", f"Failed to find file on {server_name}: {str(e)}")
 
     def get_server_info(self, server_name):
-        # Define the connection info for each server
+        # Define as informações de conexão para cada servidor
         servers = {
             "Server 1": {"hostname": "server1.example.com", "username": "user1", "password": "pass1"},
             "Server 2": {"hostname": "server2.example.com", "username": "user2", "password": "pass2"},
@@ -184,4 +157,40 @@ class FileTransferApp:
             "Server 8": {"hostname": "server8.example.com", "username": "user8", "password": "pass8"},
             "Server 9": {"hostname": "server9.example.com", "username": "user9", "password": "pass9"},
             "Server 10": {"hostname": "server10.example.com", "username": "user10", "password": "pass10"},
-            "Server 11": {"hostname": "server11.example.com", "username": "user11", "password": "
+            "Server 11": {"hostname": "server11.example.com", "username": "user11", "password": "pass11"},
+        }
+        return servers.get(server_name)
+
+    def list_files_and_dirs_on_server(self, server_info, directory):
+        hostname = server_info["hostname"]
+        username = server_info["username"]
+        password = server_info["password"]
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname, username=username, password=password)
+
+        sftp = ssh.open_sftp()
+        files = []
+        directories = []
+
+        for item in sftp.listdir_attr(directory):
+            item_name = item.filename
+            if stat.S_ISDIR(item.st_mode):
+                directories.append(item_name)
+            else:
+                files.append(item_name)
+
+        sftp.close()
+        ssh.close()
+
+        return files, directories
+
+    def find_file_on_server(self, server_info, file_path):
+        hostname = server_info["hostname"]
+        username = server_info["username"]
+        password = server_info["password"]
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname, username
