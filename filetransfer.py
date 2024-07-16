@@ -148,104 +148,61 @@ class FileTransferApp:
     def get_server_info(self, server_name):
         # Define as informações de conexão para cada servidor
         servers = {
-            "Server 1": {"hostname": "server1.example.com", "username": "user1", "password": "pass1"},
-            "Server 2": {"hostname": "server2.example.com", "username": "user2", "password": "pass2"},
-            "Server 3": {"hostname": "server3.example.com", "username": "user3", "password": "pass3"},
-            "Server 4": {"hostname": "server4.example.com", "username": "user4", "password": "pass4"},
-            "Server 5": {"hostname": "server5.example.com", "username": "user5", "password": "pass5"},
-            "Server 6": {"hostname": "server6.example.com", "username": "user6", "password": "pass6"},
-            "Server 7": {"hostname": "server7.example.com", "username": "user7", "password": "pass7"},
-            "Server 8": {"hostname": "server8.example.com", "username": "user8", "password": "pass8"},
-            "Server 9": {"hostname": "server9.example.com", "username": "user9", "password": "pass9"},
-            "Server 10": {"hostname": "server10.example.com", "username": "user10", "password": "pass10"},
-            "Server 11": {"hostname": "server11.example.com", "username": "user11", "password": "pass11"},
+            "Server 1": {"hostname": "server1.example.com", "username": "user1", "key_filename": "/path/to/id_rsa"},
+            "Server 2": {"hostname": "server2.example.com", "username": "user2", "key_filename": "/path/to/id_rsa"},
+            "Server 3": {"hostname": "server3.example.com", "username": "user3", "key_filename": "/path/to/id_rsa"},
+            "Server 4": {"hostname": "server4.example.com", "username": "user4", "key_filename": "/path/to/id_rsa"},
+            "Server 5": {"hostname": "server5.example.com", "username": "user5", "key_filename": "/path/to/id_rsa"},
+            "Server 6": {"hostname": "server6.example.com", "username": "user6", "key_filename": "/path/to/id_rsa"},
+            "Server 7": {"hostname": "server7.example.com", "username": "user7", "key_filename": "/path/to/id_rsa"},
+            "Server 8": {"hostname": "server8.example.com", "username": "user8", "key_filename": "/path/to/id_rsa"},
+            "Server 9": {"hostname": "server9.example.com", "username": "user9", "key_filename": "/path/to/id_rsa"},
+            "Server 10": {"hostname": "server10.example.com", "username": "user10", "key_filename": "/path/to/id_rsa"},
+            "Server 11": {"hostname": "server11.example.com", "username": "user11", "key_filename": "/path/to/id_rsa"}
         }
-        return servers.get(server_name)
+
+        return servers.get(server_name, {})
 
     def list_files_and_dirs_on_server(self, server_info, directory):
-        hostname = server_info["hostname"]
-        username = server_info["username"]
-        password = server_info["password"]
-
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(hostname, username=username, password=password)
-
-        sftp = ssh.open_sftp()
-        files = []
-        directories = []
-
-        for item in sftp.listdir_attr(directory):
-            item_name = item.filename
-            if stat.S_ISDIR(item.st_mode):
-                directories.append(item_name)
-            else:
-                files.append(item_name)
-
-        sftp.close()
-        ssh.close()
-
+        # Implemente a lógica para listar arquivos e diretórios no servidor remoto aqui
+        # Exemplo simples:
+        files = ["file1.txt", "file2.txt"]
+        directories = ["dir1", "dir2"]
         return files, directories
 
     def find_file_on_server(self, server_info, file_path):
-        hostname = server_info["hostname"]
-        username = server_info["username"]
-        password = server_info["password"]
-
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(hostname, username=username, password=password)
-
-        sftp = ssh.open_sftp()
-        try:
-            # Procura o arquivo no servidor
-            remote_file_path = None
-            for item in sftp.listdir_attr(os.path.dirname(file_path)):
-                if item.filename == os.path.basename(file_path):
-                    remote_file_path = os.path.join(os.path.dirname(file_path), item.filename)
-                    break
-
-            sftp.close()
-            ssh.close()
-
-            return remote_file_path
-        except Exception as e:
-            messagebox.showerror("Find Error", f"Failed to find file on {hostname}: {str(e)}")
+        # Implemente a lógica para encontrar um arquivo no servidor remoto aqui
+        # Exemplo simples:
+        return "/path/to/remote/file.txt"
 
     def download_from_server(self, server_info, remote_file_path, local_file_path):
-        hostname = server_info["hostname"]
-        username = server_info["username"]
-        password = server_info["password"]
+        # Implemente a lógica para baixar um arquivo do servidor remoto aqui
+        # Exemplo simples:
+        pass
 
-        try:
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(hostname, username=username, password=password)
-
-            sftp = ssh.open_sftp()
-            sftp.get(remote_file_path, local_file_path)
-            sftp.close()
-            ssh.close()
-        except Exception as e:
-            messagebox.showerror("Download Error", f"Failed to download file from {hostname}: {str(e)}")
-
-    def upload_to_server(self, local_file_path, server_name, remote_file_path):
+    def upload_to_server(self, local_file_path, server_name, remote_path):
         server_info = self.get_server_info(server_name)
-        hostname = server_info["hostname"]
-        username = server_info["username"]
-        password = server_info["password"]
-
         try:
+            # Conecta ao servidor usando Paramiko
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(hostname, username=username, password=password)
+            
+            # Carrega a chave privada OpenSSH (id_rsa)
+            private_key = paramiko.RSAKey.from_private_key_file(server_info["key_filename"])
 
-            sftp = ssh.open_sftp()
-            sftp.put(local_file_path, remote_file_path)
-            sftp.close()
+            # Conecta ao servidor
+            ssh.connect(server_info["hostname"], username=server_info["username"], pkey=private_key)
+
+            # SCP do arquivo local para o servidor remoto
+            scp = paramiko.SFTPClient.from_transport(ssh.get_transport())
+            scp.put(local_file_path, remote_path)
+
+            # Fecha a conexão
+            scp.close()
             ssh.close()
+
         except Exception as e:
-            messagebox.showerror("Upload Error", f"Failed to upload file to {hostname}: {str(e)}")
+            messagebox.showerror("Upload Error", f"Failed to upload file to {server_name}: {str(e)}")
 
 if __name__ == "__main__":
     root = tk.Tk()
