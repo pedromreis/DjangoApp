@@ -15,8 +15,13 @@ class FileTransferApp:
         self.label = tk.Label(self.master, text="File Transfer between Linux Machines using SCP")
         self.label.pack(pady=10)
 
-        self.source_server_label = tk.Label(self.master, text="Select the source server:")
-        self.source_server_label.pack(pady=5)
+        # Frame for server selection
+        self.server_frame = tk.Frame(self.master)
+        self.server_frame.pack(pady=5)
+
+        # Source server
+        self.source_server_label = tk.Label(self.server_frame, text="Select the source server:")
+        self.source_server_label.grid(row=0, column=1, padx=5, pady=5)
 
         self.source_server_var = tk.StringVar(self.master)
         self.source_server_var.set("Server 1")  # Default value
@@ -24,18 +29,20 @@ class FileTransferApp:
         self.servers = ["Server 1", "Server 2", "Server 3", "Server 4", "Server 5", 
                         "Server 6", "Server 7", "Server 8", "Server 9", "Server 10", "Server 11"]
 
-        self.source_server_menu = tk.OptionMenu(self.master, self.source_server_var, *self.servers, command=self.update_source_file_list)
-        self.source_server_menu.pack(pady=5)
+        self.source_server_menu = tk.OptionMenu(self.server_frame, self.source_server_var, *self.servers, command=self.update_source_file_list)
+        self.source_server_menu.grid(row=1, column=1, padx=5, pady=5)
 
-        self.destination_server_label = tk.Label(self.master, text="Select the destination server:")
-        self.destination_server_label.pack(pady=5)
+        # Destination server
+        self.destination_server_label = tk.Label(self.server_frame, text="Select the destination server:")
+        self.destination_server_label.grid(row=0, column=0, padx=5, pady=5)
 
         self.destination_server_var = tk.StringVar(self.master)
         self.destination_server_var.set("Server 2")  # Default value
 
-        self.destination_server_menu = tk.OptionMenu(self.master, self.destination_server_var, *self.servers, command=self.update_dest_dir_list)
-        self.destination_server_menu.pack(pady=5)
+        self.destination_server_menu = tk.OptionMenu(self.server_frame, self.destination_server_var, *self.servers, command=self.update_dest_dir_list)
+        self.destination_server_menu.grid(row=1, column=0, padx=5, pady=5)
 
+        # Source file selection
         self.source_file_label = tk.Label(self.master, text="Select the source file or folder:")
         self.source_file_label.pack(pady=5)
 
@@ -45,6 +52,7 @@ class FileTransferApp:
         self.source_file_menu = tk.OptionMenu(self.master, self.source_file_var, "")
         self.source_file_menu.pack(pady=5)
 
+        # Destination path selection
         self.dest_path_label = tk.Label(self.master, text="Select the destination path:")
         self.dest_path_label.pack(pady=5)
 
@@ -54,6 +62,7 @@ class FileTransferApp:
         self.dest_path_menu = tk.OptionMenu(self.master, self.dest_path_var, "")
         self.dest_path_menu.pack(pady=5)
 
+        # Transfer button
         self.transfer_button = tk.Button(self.master, text="Transfer File", command=self.transfer_file)
         self.transfer_button.pack(pady=10)
 
@@ -66,7 +75,7 @@ class FileTransferApp:
         if not os.path.exists(self.transfer_dir):
             os.makedirs(self.transfer_dir)
 
-        # Inicializa a navegação na pasta inicial
+        # Initialize file navigation
         self.update_source_file_list(self.source_server_var.get())
         self.update_dest_dir_list(self.destination_server_var.get())
 
@@ -83,7 +92,7 @@ class FileTransferApp:
             menu = menu_widget["menu"]
             menu.delete(0, "end")
 
-            # Adiciona a opção de voltar para a pasta anterior
+            # Add option to go to parent directory
             parent_dir = os.path.dirname(directory.rstrip('/'))
             if parent_dir:
                 menu.add_command(label=".. (Up)", command=lambda: self.update_file_list(server_name, menu_widget, var_widget, parent_dir, is_directory))
@@ -146,63 +155,94 @@ class FileTransferApp:
             messagebox.showerror("Find Error", f"Failed to find file on {server_name}: {str(e)}")
 
     def get_server_info(self, server_name):
-        # Define as informações de conexão para cada servidor
+        # Define connection information for each server
         servers = {
-            "Server 1": {"hostname": "server1.example.com", "username": "user1", "key_filename": "/path/to/id_rsa"},
-            "Server 2": {"hostname": "server2.example.com", "username": "user2", "key_filename": "/path/to/id_rsa"},
-            "Server 3": {"hostname": "server3.example.com", "username": "user3", "key_filename": "/path/to/id_rsa"},
-            "Server 4": {"hostname": "server4.example.com", "username": "user4", "key_filename": "/path/to/id_rsa"},
-            "Server 5": {"hostname": "server5.example.com", "username": "user5", "key_filename": "/path/to/id_rsa"},
-            "Server 6": {"hostname": "server6.example.com", "username": "user6", "key_filename": "/path/to/id_rsa"},
-            "Server 7": {"hostname": "server7.example.com", "username": "user7", "key_filename": "/path/to/id_rsa"},
-            "Server 8": {"hostname": "server8.example.com", "username": "user8", "key_filename": "/path/to/id_rsa"},
-            "Server 9": {"hostname": "server9.example.com", "username": "user9", "key_filename": "/path/to/id_rsa"},
-            "Server 10": {"hostname": "server10.example.com", "username": "user10", "key_filename": "/path/to/id_rsa"},
-            "Server 11": {"hostname": "server11.example.com", "username": "user11", "key_filename": "/path/to/id_rsa"}
+            "Server 1": {"hostname": "server1.example.com", "username": "user1", "password": "pass1"},
+            "Server 2": {"hostname": "server2.example.com", "username": "user2", "password": "pass2"},
+            "Server 3": {"hostname": "server3.example.com", "username": "user3", "password": "pass3"},
+            "Server 4": {"hostname": "server4.example.com", "username": "user4", "password": "pass4"},
+            "Server 5": {"hostname": "server5.example.com", "username": "user5", "password": "pass5"},
+            "Server 6": {"hostname": "server6.example.com", "username": "user6", "password": "pass6"},
+            "Server 7": {"hostname": "server7.example.com", "username": "user7", "password": "pass7"},
+            "Server 8": {"hostname": "server8.example.com", "username": "user8", "password": "pass8"},
+            "Server 9": {"hostname": "server9.example.com", "username": "user9", "password": "pass9"},
+            "Server 10": {"hostname": "server10.example.com", "username": "user10", "password": "pass10"},
+            "Server 11": {"hostname": "server11.example.com", "username": "user11", "password": "pass11"},
         }
-
-        return servers.get(server_name, {})
+        return servers.get(server_name)
 
     def list_files_and_dirs_on_server(self, server_info, directory):
-        # Implemente a lógica para listar arquivos e diretórios no servidor remoto aqui
-        # Exemplo simples:
-        files = ["file1.txt", "file2.txt"]
-        directories = ["dir1", "dir2"]
+        hostname = server_info["hostname"]
+        username = server_info["username"]
+        password = server_info["password"]
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname, username=username, password=password)
+
+        sftp = ssh.open_sftp()
+        files = []
+        directories = []
+
+        for item in sftp.listdir_attr(directory):
+            item_name = item.filename
+            if stat.S_ISDIR(item.st_mode):
+                directories.append(item_name)
+            else:
+                files.append(item_name)
+
+        sftp.close()
+        ssh.close()
         return files, directories
 
     def find_file_on_server(self, server_info, file_path):
-        # Implemente a lógica para encontrar um arquivo no servidor remoto aqui
-        # Exemplo simples:
-        return "/path/to/remote/file.txt"
+        hostname = server_info["hostname"]
+        username = server_info["username"]
+        password = server_info["password"]
 
-    def download_from_server(self, server_info, remote_file_path, local_file_path):
-        # Implemente a lógica para baixar um arquivo do servidor remoto aqui
-        # Exemplo simples:
-        pass
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname, username=username, password=password)
+
+        sftp = ssh.open_sftp()
+        try:
+            sftp.stat(file_path)
+            return file_path
+        except FileNotFoundError:
+            return None
+        finally:
+            sftp.close()
+            ssh.close()
+
+    def download_from_server(self, server_info, remote_file_path, local_path):
+        hostname = server_info["hostname"]
+        username = server_info["username"]
+        password = server_info["password"]
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname, username=username, password=password)
+
+        sftp = ssh.open_sftp()
+        sftp.get(remote_file_path, local_path)
+        sftp.close()
+        ssh.close()
 
     def upload_to_server(self, local_file_path, server_name, remote_path):
         server_info = self.get_server_info(server_name)
-        try:
-            # Conecta ao servidor usando Paramiko
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            
-            # Carrega a chave privada OpenSSH (id_rsa)
-            private_key = paramiko.RSAKey.from_private_key_file(server_info["key_filename"])
 
-            # Conecta ao servidor
-            ssh.connect(server_info["hostname"], username=server_info["username"], pkey=private_key)
+        hostname = server_info["hostname"]
+        username = server_info["username"]
+        password = server_info["password"]
 
-            # SCP do arquivo local para o servidor remoto
-            scp = paramiko.SFTPClient.from_transport(ssh.get_transport())
-            scp.put(local_file_path, remote_path)
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname, username=username, password=password)
 
-            # Fecha a conexão
-            scp.close()
-            ssh.close()
-
-        except Exception as e:
-            messagebox.showerror("Upload Error", f"Failed to upload file to {server_name}: {str(e)}")
+        sftp = ssh.open_sftp()
+        sftp.put(local_file_path, remote_path)
+        sftp.close()
+        ssh.close()
 
 if __name__ == "__main__":
     root = tk.Tk()
