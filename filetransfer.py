@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import paramiko
 import os
+import stat
 
 class FileTransferApp:
     def __init__(self, master):
@@ -193,4 +194,60 @@ class FileTransferApp:
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(hostname, username
+        ssh.connect(hostname, username=username, password=password)
+
+        sftp = ssh.open_sftp()
+        try:
+            # Procura o arquivo no servidor
+            remote_file_path = None
+            for item in sftp.listdir_attr(os.path.dirname(file_path)):
+                if item.filename == os.path.basename(file_path):
+                    remote_file_path = os.path.join(os.path.dirname(file_path), item.filename)
+                    break
+
+            sftp.close()
+            ssh.close()
+
+            return remote_file_path
+        except Exception as e:
+            messagebox.showerror("Find Error", f"Failed to find file on {hostname}: {str(e)}")
+
+    def download_from_server(self, server_info, remote_file_path, local_file_path):
+        hostname = server_info["hostname"]
+        username = server_info["username"]
+        password = server_info["password"]
+
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname, username=username, password=password)
+
+            sftp = ssh.open_sftp()
+            sftp.get(remote_file_path, local_file_path)
+            sftp.close()
+            ssh.close()
+        except Exception as e:
+            messagebox.showerror("Download Error", f"Failed to download file from {hostname}: {str(e)}")
+
+    def upload_to_server(self, local_file_path, server_name, remote_file_path):
+        server_info = self.get_server_info(server_name)
+        hostname = server_info["hostname"]
+        username = server_info["username"]
+        password = server_info["password"]
+
+        try:
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname, username=username, password=password)
+
+            sftp = ssh.open_sftp()
+            sftp.put(local_file_path, remote_file_path)
+            sftp.close()
+            ssh.close()
+        except Exception as e:
+            messagebox.showerror("Upload Error", f"Failed to upload file to {hostname}: {str(e)}")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = FileTransferApp(root)
+    root.mainloop()
