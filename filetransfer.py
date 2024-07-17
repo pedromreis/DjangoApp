@@ -64,9 +64,6 @@ class FileTransferApp:
         self.backup_dir = "local_backup"
         self.transfer_dir = "transferfiles"
 
-        if not os.path.exists(self.backup_dir):
-            os.makedirs(self.backup_dir)
-
         if not os.path.exists(self.transfer_dir):
             os.makedirs(self.transfer_dir)
 
